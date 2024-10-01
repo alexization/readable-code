@@ -25,20 +25,31 @@ public class MinesweeperGame {
         initializeGame();
 
         while (true) {
-            showBoard();
+            try {
+                showBoard();
 
-            if (doesUserWinTheGame()) {
-                System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
-                break;
-            }
-            if (doesUserLoseTheGame()) {
-                System.out.println("지뢰를 밟았습니다. GAME OVER!");
-                break;
-            }
+                if (doesUserWinTheGame()) {
+                    System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
+                    break;
+                }
+                if (doesUserLoseTheGame()) {
+                    System.out.println("지뢰를 밟았습니다. GAME OVER!");
+                    break;
+                }
 
-            String cellInput = getCellInputFromUser();
-            String userActionInput = getUserActionInputFromUser();
-            actOnCell(cellInput, userActionInput);
+                String cellInput = getCellInputFromUser();
+                String userActionInput = getUserActionInputFromUser();
+                actOnCell(cellInput, userActionInput);
+
+            } catch (AppException e) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.out.println("프로그램에 문제가 생겼습니다.");
+                /*
+                추후에 개발자가 확인할 수 있는 로그 형식으로 바꿔줘 왜 에러가 발생했는지 볼 수 있도록 해준다.
+                e.printStackTrace();
+                */
+            }
         }
     }
 
@@ -63,7 +74,7 @@ public class MinesweeperGame {
             checkIfGameIsOver();
             return;
         }
-        System.out.println("잘못된 번호를 선택하셨습니다.");
+        throw new AppException("잘못된 번호를 선택하셨습니다.");
     }
 
     private static void changeGameStatusToLose() {
@@ -124,11 +135,22 @@ public class MinesweeperGame {
     private static boolean isAllCellOpened() {
         return Arrays.stream(BOARD)
                 .flatMap(Arrays::stream)
-                .noneMatch(cell -> cell.equals(CLOSED_CELL_SIGN));
+                /*
+                * cell 은 검증되지 않은 값이다. 즉, null 이 들어있을 수도 있는 값이다.
+                * 언제든 null이 될 수 있는 가능성이 있는 쪽에서 메서드를 호출하면 문제가 생길 수 있다.
+                * equals() 메서드는 어느쪽에서 호출해도 동일한 결과가 나오기 때문에
+                * cell.equals(CLOSED_CELL_SIGN) 보다는 상수인 CLOSED_CELL_SIGN 에서 메서드를 호출하는 것이 안전하다.
+                * 이처럼 null이 아닌 확정적인 값에서 메서드를 호출하는 습관을 가지는게 중요하다.
+                *  */
+                .noneMatch(CLOSED_CELL_SIGN::equals);
     }
 
     private static int convertRowFrom(char cellInputRow) {
-        return Character.getNumericValue(cellInputRow) - 1;
+        int rowIndex = Character.getNumericValue(cellInputRow) - 1;
+        if (rowIndex >= BOARD_ROW_SIZE) {
+            throw new AppException("잘못된 입력입니다.");
+        }
+        return rowIndex;
     }
 
     private static int convertColFrom(char cellInputCol) {
@@ -154,7 +176,7 @@ public class MinesweeperGame {
             case 'j':
                 return 9;
             default:
-                return -1;
+                throw new AppException("잘못된 입력입니다.");
         }
     }
 
