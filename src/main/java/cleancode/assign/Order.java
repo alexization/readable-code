@@ -21,30 +21,31 @@ public class Order {
             return false;
         }
 
-        if (isAvailablePrice()) {
-            if (hasCustomerInfo()) {
-                return true;
-            }
+        if (isNotAvailablePrice()) {
+            log.info("올바르지 않은 총 가격입니다.");
+            return false;
+        }
+
+        if (hasNotCustomerInfo()) {
             log.info("사용자 정보가 없습니다.");
             return false;
         }
 
-        log.info("올바르지 않은 총 가격입니다.");
-        return false;
+        return true;
     }
 
-    private boolean isAvailablePrice() {
-        return getTotalPrice() > 0;
+    private boolean isNotAvailablePrice() {
+        return getTotalPrice() <= 0;
     }
 
     private int getTotalPrice() {
         int totalPrice = 0;
-
         for (Item item : orderItems) totalPrice += item.getPrice();
+
         return totalPrice;
     }
 
-    private boolean hasCustomerInfo() {
-        return customer != null;
+    private boolean hasNotCustomerInfo() {
+        return customer == null;
     }
 }
